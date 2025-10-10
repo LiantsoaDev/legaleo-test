@@ -71,7 +71,7 @@ export async function POST(request: Request) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-3-5-sonnet-20240620",
         max_tokens: 2500,
         messages: [
           {
@@ -83,16 +83,21 @@ export async function POST(request: Request) {
     });
 
     if (!anthropicResponse.ok) {
-      const errorPayload = await anthropicResponse.json().catch(() => null);
-      const errorMessage =
-        (errorPayload && typeof errorPayload.error?.message === "string"
-          ? errorPayload.error.message
-          : undefined) ??
-        `Erreur Anthropics ${anthropicResponse.status}`;
+      const errorPayload = (await anthropicResponse.json().catch(() => null)) as
+        | { error?: { message?: string } }
+        | null;
+      const upstreamMessage = errorPayload?.error?.message;
+
+      const friendlyMessage = upstreamMessage?.toLowerCase().includes("model")
+        ? "Le modèle de génération demandé est indisponible. Vérifiez le nom du modèle Anthropics configuré."
+        : undefined;
 
       return NextResponse.json(
-        { ok: false, error: errorMessage },
-        { status: anthropicResponse.status }
+        {
+          ok: false,
+          error: friendlyMessage ?? upstreamMessage ?? `Erreur Anthropics ${anthropicResponse.status}`,
+        },
+        { status: 502 }
       );
     }
 

@@ -87,6 +87,15 @@ export default function HomePage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [contract, setContract] = useState<string>("");
 
+  const outputRows = useMemo(() => {
+    if (!contract) {
+      return 12;
+    }
+
+    const lineCount = contract.split(/\r?\n/).length + 2;
+    return Math.max(12, Math.min(40, lineCount));
+  }, [contract]);
+
   const allValid = useMemo(
     () =>
       items.every((item) => item.answer.trim().length >= MIN_ANSWER_LENGTH),
@@ -209,7 +218,13 @@ export default function HomePage() {
 
       {contract && (
         <section className="output-panel" aria-label="Contrat généré">
-          <article>{contract}</article>
+          <textarea
+            className="contract-output"
+            value={contract}
+            readOnly
+            rows={outputRows}
+            aria-label="Contrat généré"
+          />
         </section>
       )}
     </>
