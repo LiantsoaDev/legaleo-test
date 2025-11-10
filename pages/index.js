@@ -7,6 +7,7 @@ export default function Home() {
       <p><Link href="/login">Login</Link></p>
       <p><Link href="/signup">Sign up</Link></p>
       <p><Link href="/reset-password">Reset Password</Link></p>
+      <p><Link href="/generate-contract">Générer un contrat</Link></p>
     </div>
   );
 }
