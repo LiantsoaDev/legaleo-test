@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import path from "node:path";
+import { promises as fs } from "node:fs";
 import { buildPrompt } from "@/lib/prompt";
 import type { QA } from "@/lib/types";
 
@@ -62,6 +64,33 @@ export async function POST(request: Request) {
 
   const prompt = buildPrompt(body.items);
 
+  const templatePath = path.join(
+    process.cwd(),
+    "app",
+    "contract",
+    "modele_de_contrat.pdf"
+  );
+
+  let contractTemplateData: string;
+
+  try {
+    const templateBuffer = await fs.readFile(templatePath);
+    contractTemplateData = templateBuffer.toString("base64");
+  } catch (error) {
+    console.error(
+      "Modèle de contrat introuvable ou illisible :",
+      error
+    );
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Le modèle de contrat est introuvable. Vérifiez la présence de app/contract/modele_de_contrat.pdf.",
+      },
+      { status: 500 }
+    );
+  }
+
   try {
     const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -69,6 +98,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
+        "anthropic-beta": "pdfs-2024-04-11",
       },
       body: JSON.stringify({
         model: "claude-3-5-sonnet-20240620",
@@ -76,7 +106,19 @@ export async function POST(request: Request) {
         messages: [
           {
             role: "user",
-            content: prompt,
+            content: [
+              {
+                type: "text",
+                text: prompt,
+              },
+            ],
+          },
+        ],
+        attachments: [
+          {
+            name: "modele_de_contrat.pdf",
+            type: "application/pdf",
+            data: contractTemplateData,
           },
         ],
       }),
