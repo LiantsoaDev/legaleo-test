@@ -340,7 +340,7 @@ const defaultItems: QA[] = [
   },
 ];
 
-const MIN_ANSWER_LENGTH = 5;
+const MIN_ANSWER_LENGTH = 2;
 
 type FetchState = "idle" | "loading" | "success" | "error";
 
